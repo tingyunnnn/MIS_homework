@@ -7,19 +7,54 @@ app = Flask(__name__)
 
 # 教學用：資料只暫存在記憶體。重新啟動程式後會清空。
 tickets = []
-STATUSES = ("待審核", "已派工", "處理中", "待料中", "已結案")
+STATUSES = ("待審核", "已派工", "處理中", "等待零件", "已結案")
 
-# 待確認設定：以下僅供課堂測試，不是正式校園資料。取得清單後集中替換。
+# 正式選項集中管理：value 為穩定識別碼，標籤保留完整地點名稱及指定順序。
 FORM_OPTIONS = {
-    "buildings": [("test_building", "測試大樓（待確認，非正式資料）")],
-    "equipment": [("test_equipment", "測試設備（待確認，非正式資料）"), ("other", "其他")],
-    "description": [("test_problem", "測試問題（待確認，非正式資料）"), ("other", "其他")],
+    "buildings": [
+        ("liberal_arts_la", "文學院大樓 LA"),
+        ("fine_arts_fa", "藝術大樓 FA"),
+        ("science_east_sc", "理學院及東綜合大樓 SC"),
+        ("bioscience_bi", "生科館 BI"),
+        ("physics_ph", "物理館 PH"),
+        ("chemistry_ch", "化學館 CH"),
+        ("materials_ms", "材料大樓 MS"),
+        ("electrical_ec", "電資大樓 EC"),
+        ("mechanical_en", "機電大樓 EN"),
+        ("management_cm", "管理學院 CM"),
+        ("marine_engineering_me", "海工館 ME"),
+        ("marine_research_ma", "海科研究大樓及實驗大樓 MA"),
+        ("marine_resources_mb", "海資館 MB"),
+        ("social_sciences_ss", "社會科學院 SS"),
+        ("siwan_library_10f_sw", "西灣學院 圖資10F SW"),
+        ("siwan_general_ge", "西灣學院 綜合大樓 GE"),
+        ("library_3f_il", "圖資3樓 IL"),
+        ("library_9f_il", "圖資9樓 IL"),
+        ("library_3_to_8f", "圖書館(3~8樓)"),
+        ("international_ir", "國際研究大樓 IR"),
+        ("library_computer_b1_il_pc", "圖資大樓 電腦教室B1 IL PC"),
+    ],
+    "equipment": [
+        ("projector", "投影機"),
+        ("computer", "電腦"),
+        ("air_conditioner", "冷氣"),
+        ("microphone", "麥克風"),
+        ("network_equipment", "網路設備"),
+        ("other", "其他"),
+    ],
+    "description": [
+        ("cannot_power_on", "無法開機"),
+        ("malfunction", "無法正常運作"),
+        ("connection_issue", "連線異常"),
+        ("damaged", "設備損壞"),
+        ("other", "其他"),
+    ],
 }
 EMAIL_PATTERN = r"[A-Za-z0-9._%+\-]+@[A-Za-z0-9](?:[A-Za-z0-9\-]*[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9\-]*[A-Za-z0-9])?)+"
 
 
 def public_ticket(ticket):
-    # 清單及更新回應皆不公開聯絡資料；目前後台尚無登入保護。
+    # 原公開 API、建立及更新回應排除聯絡資料；後台另有無保護的讀取 API。
     return {key: value for key, value in ticket.items()
             if key not in {"contact", "contact_name", "contact_email"}}
 
@@ -37,6 +72,12 @@ def admin():
 @app.get("/api/tickets")
 def list_tickets():
     return jsonify([public_ticket(ticket) for ticket in tickets])
+
+
+@app.get("/api/admin/tickets")
+def list_admin_tickets():
+    # 尚無登入或存取保護，僅供本機課堂展示，務必使用虛構資料。
+    return jsonify(tickets)
 
 
 @app.post("/api/tickets")

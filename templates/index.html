@@ -8,18 +8,16 @@
   </head>
   <body>
     <main class="container">
-      <header>
-        <div class="topbar">
-          <p class="eyebrow">MIS 前後端範例</p>
-          <a class="admin-link" href="/admin">前往管理後台</a>
+      <header class="repair-header">
+        <div class="repair-heading">
+          <h1>校園設備報修系統</h1>
+          <p>填寫報修資料，送出後由 Python 後端建立案件。</p>
         </div>
-        <h1>校園設備報修系統</h1>
-        <p>填寫報修資料，送出後由 Python 後端建立案件。</p>
+        <a class="admin-link" href="/admin">前往管理後台</a>
       </header>
 
       <section class="panel" aria-labelledby="form-title">
         <h2 id="form-title">建立報修單</h2>
-        <p class="configuration-note">大樓、設備與問題選項尚待確認；標示「測試」的選項僅供課堂測試，非正式資料。</p>
         <form id="ticket-form">
           <label>
             大樓

@@ -40,6 +40,8 @@ function renderTickets(tickets) {
     addCell(row, `${ticket.location}／${ticket.equipment}`);
     addCell(row, ticket.description);
     addCell(row, ticket.created_at);
+    addCell(row, ticket.contact_name || "");
+    addCell(row, ticket.contact_email || "");
 
     const statusCell = document.createElement("td");
     const select = createStatusSelect(ticket.status);
@@ -91,7 +93,8 @@ function renderTickets(tickets) {
 
 async function loadTickets() {
   try {
-    const response = await fetch("/api/tickets");
+    // 此資料 API 尚無存取保護，僅供本機以虛構資料展示。
+    const response = await fetch("/api/admin/tickets");
     if (!response.ok) throw new Error("無法讀取案件清單");
     renderTickets(await response.json());
   } catch (error) {

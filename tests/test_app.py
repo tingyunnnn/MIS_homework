@@ -1,6 +1,10 @@
 import unittest
+import json
+from pathlib import Path
 
-from app import app, tickets
+from app import app, tickets, FORM_OPTIONS
+
+EXPECTED_OPTIONS = json.loads(Path(__file__).with_name('expected_options.json').read_text(encoding='utf-8'))
 
 
 class TicketTests(unittest.TestCase):
@@ -8,8 +12,8 @@ class TicketTests(unittest.TestCase):
         tickets.clear()
         self.client = app.test_client()
         self.payload = {
-            "building": "test_building", "classroom": "302",
-            "equipment": "test_equipment", "description": "test_problem",
+            "building": "liberal_arts_la", "classroom": "302",
+            "equipment": "projector", "description": "cannot_power_on",
             "contact_name": "測試同學", "contact_email": "student+test@example.com",
             "urgency": "一般",
         }
@@ -27,6 +31,44 @@ class TicketTests(unittest.TestCase):
         for ticket in [response.json['ticket'], *self.client.get('/api/tickets').json]:
             self.assertNotIn('contact_name', ticket)
             self.assertNotIn('contact_email', ticket)
+
+    def test_official_option_order_and_unique_values(self):
+        for key, count in [('buildings', 21), ('equipment', 6), ('description', 5)]:
+            options = FORM_OPTIONS[key]
+            self.assertEqual([list(option) for option in options], EXPECTED_OPTIONS[key])
+            self.assertEqual(len(options), count)
+            self.assertEqual(len({value for value, label in options}), count)
+
+    def test_all_official_buildings(self):
+        for value, label in EXPECTED_OPTIONS['buildings']:
+            with self.subTest(building=value):
+                response = self.client.post('/api/tickets', json={**self.payload, 'building': value})
+                self.assertEqual(response.status_code, 201)
+                self.assertEqual(response.json['ticket']['building'], value)
+                self.assertEqual(response.json['ticket']['location'], f'{label} 302')
+
+    def test_all_official_equipment(self):
+        for value, label in EXPECTED_OPTIONS['equipment']:
+            with self.subTest(equipment=value):
+                response = self.client.post('/api/tickets', json={**self.payload, 'equipment': value, 'equipment_other': '自訂設備'})
+                self.assertEqual(response.status_code, 201)
+                self.assertEqual(response.json['ticket']['equipment_type'], value)
+                self.assertEqual(response.json['ticket']['equipment'], '自訂設備' if value == 'other' else label)
+
+    def test_all_official_descriptions(self):
+        for value, label in EXPECTED_OPTIONS['description']:
+            with self.subTest(description=value):
+                response = self.client.post('/api/tickets', json={**self.payload, 'description': value, 'description_other': '自訂問題'})
+                self.assertEqual(response.status_code, 201)
+                self.assertEqual(response.json['ticket']['description_type'], value)
+                self.assertEqual(response.json['ticket']['description'], '自訂問題' if value == 'other' else label)
+
+    def test_old_option_values_rejected(self):
+        for field, value in [('building', 'test_building'), ('equipment', 'test_equipment'),
+                             ('description', 'test_problem'), ('building', 'IL'), ('building', 'LA')]:
+            with self.subTest(field=field, value=value):
+                self.assertEqual(self.client.post('/api/tickets', json={**self.payload, field: value}).status_code, 400)
+        self.assertEqual(tickets, [])
 
     def test_required_fields_and_types(self):
         for field in self.payload:
@@ -72,7 +114,7 @@ class TicketTests(unittest.TestCase):
             response = self.client.post('/api/tickets', json={**self.payload, 'urgency': urgency})
             self.assertEqual(response.status_code, 201)
             self.assertEqual(response.json['ticket']['urgency'], urgency)
-        for status in ['待審核', '已派工', '處理中', '待料中', '已結案']:
+        for status in ['待審核', '已派工', '處理中', '等待零件', '已結案']:
             response = self.client.patch('/api/tickets/T-001', json={'status': status, 'assignee': '測試技師'})
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response.json['ticket']['status'], status)
@@ -85,6 +127,27 @@ class TicketTests(unittest.TestCase):
             response = self.client.get(path)
             self.assertEqual(response.status_code, 200)
             self.assertNotIn('<th>聯絡方式</th>', response.get_data(as_text=True))
+            self.assertNotIn('MIS 前後端範例', response.get_data(as_text=True))
+
+    def test_old_waiting_status_rejected(self):
+        self.client.post('/api/tickets', json=self.payload)
+        original = tickets[0].copy()
+        response = self.client.patch('/api/tickets/T-001', json={'status': '待料中', 'assignee': '技師'})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(tickets[0], original)
+
+    def test_unprotected_backend_contact_api(self):
+        self.assertEqual(self.client.get('/api/admin/tickets').json, [])
+        self.client.post('/api/tickets', json=self.payload)
+        self.client.patch('/api/tickets/T-001', json={'status': '等待零件', 'assignee': '虛構技師'})
+        response = self.client.get('/api/admin/tickets')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json[0]['contact_name'], self.payload['contact_name'])
+        self.assertEqual(response.json[0]['contact_email'], self.payload['contact_email'])
+        self.assertEqual(response.json[0]['status'], '等待零件')
+        for ticket in self.client.get('/api/tickets').json:
+            self.assertNotIn('contact_name', ticket)
+            self.assertNotIn('contact_email', ticket)
 
     def test_pending_without_assignee(self):
         self.client.post('/api/tickets', json=self.payload)
@@ -97,7 +160,7 @@ class TicketTests(unittest.TestCase):
         from copy import deepcopy
         self.client.post('/api/tickets', json=self.payload)
         original = deepcopy(tickets[0])
-        for status in ['已派工', '處理中', '待料中', '已結案']:
+        for status in ['已派工', '處理中', '等待零件', '已結案']:
             for value in ['', '   ', None, [], 123]:
                 with self.subTest(status=status, value=value):
                     response = self.client.patch('/api/tickets/T-001', json={'status': status, 'assignee': value})
@@ -109,7 +172,7 @@ class TicketTests(unittest.TestCase):
 
     def test_update_both_and_free_transitions(self):
         self.client.post('/api/tickets', json=self.payload)
-        for status in ['已結案', '已派工', '待料中', '處理中', '待審核']:
+        for status in ['已結案', '已派工', '等待零件', '處理中', '待審核']:
             response = self.client.patch('/api/tickets/T-001', json={'status': status, 'assignee': ' 王技師 '})
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response.json['ticket']['status'], status)
