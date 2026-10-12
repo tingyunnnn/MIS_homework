@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>校園設備報修系統</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body>
+    <main class="container">
+      <header>
+        <div class="topbar">
+          <p class="eyebrow">MIS 前後端範例</p>
+          <a class="admin-link" href="/admin">前往管理後台</a>
+        </div>
+        <h1>校園設備報修系統</h1>
+        <p>填寫報修資料，送出後由 Python 後端建立案件。</p>
+      </header>
+
+      <section class="panel" aria-labelledby="form-title">
+        <h2 id="form-title">建立報修單</h2>
+        <form id="ticket-form">
+          <label>
+            地點
+            <input name="location" placeholder="例如：資訊大樓 302" required />
+          </label>
+          <label>
+            設備
+            <input name="equipment" placeholder="例如：投影機" required />
+          </label>
+          <label>
+            緊急程度
+            <select name="urgency">
+              <option value="一般">一般</option>
+              <option value="急件">急件</option>
+              <option value="緊急">緊急</option>
+            </select>
+          </label>
+          <label>
+            聯絡方式
+            <input name="contact" placeholder="例如：王小明／0912-345-678" required />
+          </label>
+          <label>
+            問題描述
+            <textarea name="description" rows="4" placeholder="請描述故障情況" required></textarea>
+          </label>
+          <button type="submit">送出報修</button>
+        </form>
+        <p id="message" class="message" aria-live="polite"></p>
+      </section>
+
+      <section class="panel" aria-labelledby="list-title">
+        <div class="section-heading">
+          <h2 id="list-title">目前案件</h2>
+          <button id="refresh-button" class="secondary" type="button">重新整理</button>
+        </div>
+        <p id="empty-state">目前尚無報修案件。</p>
+        <div class="table-wrap">
+          <table id="ticket-table" hidden>
+            <thead>
+              <tr>
+                <th>編號</th>
+                <th>地點</th>
+                <th>設備</th>
+                <th>緊急程度</th>
+                <th>聯絡方式</th>
+                <th>狀態</th>
+                <th>問題描述</th>
+                <th>建立時間</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+  </body>
+</html>

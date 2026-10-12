@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>案件管理後台</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body>
+    <main class="container">
+      <header>
+        <div class="topbar">
+          <p class="eyebrow">MIS 前後端範例</p>
+          <a class="admin-link" href="/">回報修頁面</a>
+        </div>
+        <h1>案件管理後台</h1>
+        <p>管理員可檢視報修案件，並更新處理狀態。</p>
+      </header>
+
+      <section class="panel" aria-labelledby="admin-list-title">
+        <div class="section-heading">
+          <h2 id="admin-list-title">所有報修案件</h2>
+          <button id="refresh-button" class="secondary" type="button">重新整理</button>
+        </div>
+        <p id="message" class="message" aria-live="polite"></p>
+        <p id="empty-state">目前尚無報修案件。</p>
+        <div class="table-wrap">
+          <table id="ticket-table" hidden>
+            <thead>
+              <tr>
+                <th>編號</th>
+                <th>地點／設備</th>
+                <th>聯絡方式</th>
+                <th>問題描述</th>
+                <th>建立時間</th>
+                <th>處理狀態</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+    <script src="{{ url_for('static', filename='admin.js') }}"></script>
+  </body>
+</html>
