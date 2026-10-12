@@ -7,14 +7,13 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
   </head>
   <body>
-    <main class="container">
-      <header>
-        <div class="topbar">
-          <p class="eyebrow">MIS 前後端範例</p>
-          <a class="admin-link" href="/">回報修頁面</a>
+    <main class="container admin-container">
+      <header class="repair-header">
+        <div class="repair-heading">
+          <h1>案件管理後台</h1>
+          <p>管理員可自由切換五種狀態並指派維修負責人；除「待審核」外，其他狀態皆須填寫負責人。</p>
         </div>
-        <h1>案件管理後台</h1>
-        <p>管理員可檢視報修案件，並更新處理狀態。</p>
+        <a class="admin-link" href="/">回報修頁面</a>
       </header>
 
       <section class="panel" aria-labelledby="admin-list-title">
@@ -24,16 +23,18 @@
         </div>
         <p id="message" class="message" aria-live="polite"></p>
         <p id="empty-state">目前尚無報修案件。</p>
-        <div class="table-wrap">
-          <table id="ticket-table" hidden>
+        <div class="table-wrap" tabindex="0" role="region" aria-label="案件表格，可水平捲動">
+          <table id="ticket-table" class="admin-table" data-statuses='{{ statuses | tojson }}' hidden>
             <thead>
               <tr>
                 <th>編號</th>
                 <th>地點／設備</th>
-                <th>聯絡方式</th>
                 <th>問題描述</th>
                 <th>建立時間</th>
+                <th>報修人姓名</th>
+                <th>電子郵件</th>
                 <th>處理狀態</th>
+                <th>維修負責人</th>
                 <th>操作</th>
               </tr>
             </thead>
