@@ -38,7 +38,6 @@ function renderTickets(tickets) {
     const row = document.createElement("tr");
     addCell(row, ticket.id);
     addCell(row, `${ticket.location}／${ticket.equipment}`);
-    addCell(row, ticket.contact);
     addCell(row, ticket.description);
     addCell(row, ticket.created_at);
 

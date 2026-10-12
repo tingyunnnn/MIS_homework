@@ -44,3 +44,47 @@ Running on http://127.0.0.1:5000
 ## 注意事項
 
 本範例把案件資料存在 Python 的記憶體中，停止或重啟程式後，資料會清空。
+
+## 第一階段：前台表單
+
+大樓、設備及問題選項集中於 `app.py` 的 `FORM_OPTIONS`。目前帶有 `test_` 的值及標示「測試／待確認」的文字僅供課堂測試，並非正式校園資料。取得正式清單後在此集中替換，HTML 選項與後端驗證會使用相同設定。設備與問題清單須保留 `("other", "其他")`。
+
+建立案件仍使用 `POST /api/tickets`，JSON 範例：
+
+```json
+{
+  "building": "test_building",
+  "classroom": "302",
+  "equipment": "other",
+  "equipment_other": "自訂設備",
+  "description": "other",
+  "description_other": "無法啟動",
+  "contact_name": "測試同學",
+  "contact_email": "student@example.com",
+  "urgency": "一般"
+}
+```
+
+選擇一般設備／問題時，自訂欄位隱藏、停用且清空，不會包含在表單 JSON；後端也忽略不適用的自訂內容。選擇 `other` 時，自訂內容必填。電子郵件使用 HTML `type="email"`、共享格式規則與後端驗證，接受一般 email 及子網域，不限制學校網域；格式驗證不代表信箱確實存在。
+
+有效資料回傳 HTTP 201；無效資料回傳 HTTP 400 及中文 `message`。回傳案件的 `equipment`、`description` 是供表格顯示的文字，原選項值另存於 `equipment_type`、`description_type`，`location` 是大樓標籤與詳細位置的組合。
+
+由於後台尚無登入保護，依第一階段需求，前後台清單均暫不顯示姓名及 Email。聯絡資料仍保存在後端記憶體，所有案件 API 回應均排除聯絡欄位。原本「待處理、處理中、已完成」與後台儲存狀態功能保留。
+
+## 測試
+
+Flask test client 模擬 API 請求，不必啟動伺服器，也不需要額外測試套件：
+
+```powershell
+.\.venv\Scripts\python.exe -m unittest discover -s tests -v
+```
+
+`tests/browser.cjs` 使用 Playwright 與本機 Edge 驗證前端。先以有效的 Python 環境啟動 Flask 於 5055，再於具備 Playwright 的 Node.js 環境執行：
+
+```powershell
+.\.venv\Scripts\python.exe -m flask --app app run --port 5055
+# 另一個終端機；如果套件不在一般搜尋路徑，可設定 PLAYWRIGHT_MODULE 指向套件。
+node tests/browser.cjs
+```
+
+瀏覽器測試會建立測試案件及更新測試案件狀態，請使用獨立測試伺服器。手機排版及實際校園選項仍需人工確認。

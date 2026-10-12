@@ -19,14 +19,33 @@
 
       <section class="panel" aria-labelledby="form-title">
         <h2 id="form-title">建立報修單</h2>
+        <p class="configuration-note">大樓、設備與問題選項尚待確認；標示「測試」的選項僅供課堂測試，非正式資料。</p>
         <form id="ticket-form">
           <label>
-            地點
-            <input name="location" placeholder="例如：資訊大樓 302" required />
+            大樓
+            <select name="building" required>
+              <option value="">請選擇大樓</option>
+              {% for value, label in options.buildings %}
+              <option value="{{ value }}">{{ label }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label>
+            教室／詳細位置
+            <input name="classroom" placeholder="請輸入教室或詳細位置" required />
           </label>
           <label>
             設備
-            <input name="equipment" placeholder="例如：投影機" required />
+            <select name="equipment" required aria-controls="equipment-other-field">
+              <option value="">請選擇設備</option>
+              {% for value, label in options.equipment %}
+              <option value="{{ value }}">{{ label }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label id="equipment-other-field" hidden>
+            自訂設備
+            <input name="equipment_other" disabled />
           </label>
           <label>
             緊急程度
@@ -37,12 +56,25 @@
             </select>
           </label>
           <label>
-            聯絡方式
-            <input name="contact" placeholder="例如：王小明／0912-345-678" required />
+            姓名
+            <input name="contact_name" autocomplete="name" required />
+          </label>
+          <label>
+            電子郵件
+            <input name="contact_email" type="email" autocomplete="email" pattern="{{ email_pattern }}" placeholder="name@example.com" title="請輸入完整電子郵件，例如 name@example.com" required />
           </label>
           <label>
             問題描述
-            <textarea name="description" rows="4" placeholder="請描述故障情況" required></textarea>
+            <select name="description" required aria-controls="description-other-field">
+              <option value="">請選擇問題描述</option>
+              {% for value, label in options.description %}
+              <option value="{{ value }}">{{ label }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label id="description-other-field" hidden>
+            自訂問題描述
+            <textarea name="description_other" rows="4" disabled></textarea>
           </label>
           <button type="submit">送出報修</button>
         </form>
@@ -63,7 +95,6 @@
                 <th>地點</th>
                 <th>設備</th>
                 <th>緊急程度</th>
-                <th>聯絡方式</th>
                 <th>狀態</th>
                 <th>問題描述</th>
                 <th>建立時間</th>

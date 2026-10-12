@@ -5,6 +5,8 @@
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
+.configuration-note { color: #665019; line-height: 1.6; }
 
 body { margin: 0; }
 
