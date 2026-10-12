@@ -14,7 +14,7 @@
           <a class="admin-link" href="/">回報修頁面</a>
         </div>
         <h1>案件管理後台</h1>
-        <p>管理員可檢視報修案件，並更新處理狀態。</p>
+        <p>管理員可自由切換五種狀態並指派維修負責人；除「待審核」外，其他狀態皆須填寫負責人。</p>
       </header>
 
       <section class="panel" aria-labelledby="admin-list-title">
@@ -25,7 +25,7 @@
         <p id="message" class="message" aria-live="polite"></p>
         <p id="empty-state">目前尚無報修案件。</p>
         <div class="table-wrap">
-          <table id="ticket-table" hidden>
+          <table id="ticket-table" data-statuses='{{ statuses | tojson }}' hidden>
             <thead>
               <tr>
                 <th>編號</th>
@@ -33,6 +33,7 @@
                 <th>問題描述</th>
                 <th>建立時間</th>
                 <th>處理狀態</th>
+                <th>維修負責人</th>
                 <th>操作</th>
               </tr>
             </thead>

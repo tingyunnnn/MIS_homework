@@ -67,9 +67,29 @@ const assert = require('node:assert/strict');
     await page.goto('http://127.0.0.1:5055/admin');
     const row = page.locator('tbody tr').filter({ hasText: ticketId });
     await row.locator('select').selectOption('處理中');
-    await row.getByRole('button', { name: '儲存狀態' }).click();
+    let patchCount = 0;
+    page.on('request', r => { if (r.method() === 'PATCH') patchCount++; });
+    await row.locator('input').fill('   ');
+    await row.getByRole('button', { name: '儲存案件' }).click();
+    assert.equal(patchCount, 0);
+    assert.match(await page.locator('#message').textContent(), /必須填寫維修負責人/);
+    await row.locator('input').fill('測試技師');
+    await row.getByRole('button', { name: '儲存案件' }).click();
     await page.waitForFunction(() => document.querySelector('#message').textContent.includes('已更新'));
     assert.equal(await row.locator('select').inputValue(), '處理中');
+    assert.equal(await row.locator('input').inputValue(), '測試技師');
+    for (const status of ['已結案', '已派工', '待料中', '待審核']) {
+      await row.locator('select').selectOption(status);
+      if (status === '待審核') await row.locator('input').fill('');
+      const saved = page.waitForResponse(r => r.request().method() === 'PATCH');
+      await row.getByRole('button', { name: '儲存案件' }).click();
+      assert.equal((await saved).status(), 200);
+      await page.waitForFunction(({ id, status }) => {
+        const row = [...document.querySelectorAll('tbody tr')].find(r => r.cells[0].textContent === id);
+        return row.querySelector('select').value === status && !row.querySelector('button').disabled;
+      }, { id: ticketId, status });
+    }
+    assert.equal(await row.locator('input').inputValue(), '');
     assert.equal(await page.getByRole('columnheader', { name: '聯絡方式' }).count(), 0);
     console.log('PASS: 必填、Email、其他切換、JSON 排除、建立、重設、後台更新');
   } finally {

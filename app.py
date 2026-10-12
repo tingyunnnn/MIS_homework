@@ -7,6 +7,7 @@ app = Flask(__name__)
 
 # 教學用：資料只暫存在記憶體。重新啟動程式後會清空。
 tickets = []
+STATUSES = ("待審核", "已派工", "處理中", "待料中", "已結案")
 
 # 待確認設定：以下僅供課堂測試，不是正式校園資料。取得清單後集中替換。
 FORM_OPTIONS = {
@@ -30,7 +31,7 @@ def index():
 
 @app.get("/admin")
 def admin():
-    return render_template("admin.html")
+    return render_template("admin.html", statuses=STATUSES)
 
 
 @app.get("/api/tickets")
@@ -84,7 +85,8 @@ def create_ticket():
         "location": f'{dict(FORM_OPTIONS["buildings"])[values["building"]]} {values["classroom"]}',
         "equipment": equipment,
         "description": description,
-        "status": "待處理",
+        "status": "待審核",
+        "assignee": "",
         "created_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
     }
     tickets.append(ticket)
@@ -106,16 +108,23 @@ def update_ticket(ticket_id):
     if not isinstance(status, str):
         return jsonify({"message": "案件狀態不正確"}), 400
     status = status.strip()
-    allowed_statuses = {"待處理", "處理中", "已完成"}
-
-    if status not in allowed_statuses:
+    if status not in STATUSES:
         return jsonify({"message": "案件狀態不正確"}), 400
 
     ticket = next((item for item in tickets if item["id"] == ticket_id), None)
     if ticket is None:
         return jsonify({"message": "找不到指定案件"}), 404
 
-    ticket["status"] = status
+    # PATCH 未提供負責人時保留原值；有提供空字串則表示清除指派。
+    assignee = data.get("assignee", ticket.get("assignee", ""))
+    if not isinstance(assignee, str):
+        return jsonify({"message": "維修負責人必須為姓名文字"}), 400
+    assignee = assignee.strip()
+    if status != "待審核" and not assignee:
+        return jsonify({"message": f"「{status}」必須填寫維修負責人"}), 400
+
+    # 所有驗證通過後才更新，避免驗證失敗造成部分寫入。
+    ticket.update(status=status, assignee=assignee)
     return jsonify({"message": f"{ticket_id} 已更新為「{status}」", "ticket": public_ticket(ticket)})
 
 
